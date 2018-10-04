@@ -35,6 +35,7 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
       return [];
 
     let flatTasklistData = this.manageTasklistMetadata(editor);
+    this.publish(flatTasklistData);
 
     const hints = [];
     contexts.forEach((context) => {
