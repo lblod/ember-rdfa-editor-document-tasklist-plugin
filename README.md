@@ -1,7 +1,7 @@
 @lblod/ember-rdfa-editor-document-tasklist-plugin
 ==============================================================================
 
-Plugin for extracting information about tasklist linked to a document and publishing it.
+Plugin for extracting information about a tasklist linked to a document and publishing it.
 
 Installation
 ------------------------------------------------------------------------------
@@ -38,6 +38,9 @@ In host app:  styles/app.scss:
 ```
 @import 'ember-rdfa-editor-document-tasklist-plugin';
 ```
+
+The availible information is a property of the service and called `tasklistData = A()`.
+
 TODO
 ------------------------------------------------------------------------------
 * Heavy copy pasting of https://github.com/lblod/ember-rdfa-editor-template-variables-manager-plugin
