@@ -2,6 +2,8 @@ import { getOwner } from '@ember/application';
 import Service from '@ember/service';
 import EmberObject, { computed } from '@ember/object';
 import { task } from 'ember-concurrency';
+import TasklistDataDomManipulation from '../mixins/tasklist-data-dom-manipulation';
+import { A } from '@ember/array';
 
 /**
  * Service responsible for correct annotation of dates
@@ -11,12 +13,7 @@ import { task } from 'ember-concurrency';
  * @constructor
  * @extends EmberService
  */
-const RdfaEditorDocumentTasklistPlugin = Service.extend({
-
-  init(){
-    this._super(...arguments);
-    const config = getOwner(this).resolveRegistration('config:environment');
-  },
+const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulation, {
 
   /**
    * Restartable task to handle the incoming events from the editor dispatcher
@@ -30,15 +27,21 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend({
    *
    * @public
    */
-  execute: task(function * (hrId, contexts, hintsRegistry, editor) {
+  execute: task(function * (hrId, contexts, hintsRegistry, editor, extraInfo = []) {
     if (contexts.length === 0) return [];
+
+     //if we see event was triggered by this plugin, ignore it
+    if(extraInfo.find(i => i && i.who == "editor-plugins/document-tasklist-card"))
+      return [];
+
+    let flatTasklistData = this.manageTasklistMetadata(editor);
 
     const hints = [];
     contexts.forEach((context) => {
-      let relevantContext = this.detectRelevantContext(context)
+      let relevantContext = this.detectRelevantContext(context);
       if (relevantContext) {
         hintsRegistry.removeHintsInRegion(context.region, hrId, this.get('who'));
-        hints.pushObjects(this.generateHintsForContext(context));
+        hints.pushObjects(this.generateHintsForContext(context, flatTasklistData));
       }
     });
     const cards = hints.map( (hint) => this.generateCard(hrId, hintsRegistry, editor, hint));
@@ -59,25 +62,7 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend({
    * @private
    */
   detectRelevantContext(context){
-    return context.text.toLowerCase().indexOf('hello') >= 0;
-  },
-
-
-
-  /**
-   * Maps location of substring back within reference location
-   *
-   * @method normalizeLocation
-   *
-   * @param {[int,int]} [start, end] Location withing string
-   * @param {[int,int]} [start, end] reference location
-   *
-   * @return {[int,int]} [start, end] absolute location
-   *
-   * @private
-   */
-  normalizeLocation(location, reference){
-    return [location[0] + reference[0], location[1] + reference[0]];
+    return context.context.find(t => t.predicate == "http://mu.semte.ch/vocabularies/ext/tasklistDataHintText");
   },
 
   /**
@@ -97,10 +82,11 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend({
   generateCard(hrId, hintsRegistry, editor, hint){
     return EmberObject.create({
       info: {
-        label: this.get('who'),
+        label: 'Wenst u een takenlijst toe te voegen?',
         plainValue: hint.text,
         htmlString: '<b>hello world</b>',
         location: hint.location,
+        taskInstanceData: hint.taskInstanceData,
         hrId, hintsRegistry, editor
       },
       location: hint.location,
@@ -119,13 +105,31 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend({
    *
    * @private
    */
-  generateHintsForContext(context){
+  generateHintsForContext(context, flatTasklistData){
     const hints = [];
-    const index = context.text.toLowerCase().indexOf('hello');
-    const text = context.text.slice(index, index+5);
-    const location = this.normalizeLocation([index, index + 5], context.region);
-    hints.push({text, location});
+    const text = context.text;
+    const location = context.region;
+    const taskInstanceData = this.getTasklistData(context.richNode.domNode.parentElement, flatTasklistData);
+    hints.push({text, location, taskInstanceData});
     return hints;
+  },
+
+  getTasklistData(domTasklistDataInstance, flatTasklistData){
+    return flatTasklistData.find(d => d.tasklistDataInstance.isSameNode(domTasklistDataInstance));
+  },
+
+  publish(flatTasklistData){
+    if(!this.tasklistData){
+      this.set('tasklistData', A());
+    }
+    let publishData = flatTasklistData
+          .filter(d => d.tasklistDataState == 'syncing')
+          .map(d => { return {'tasklistUri': d.tasklistUri }; });
+    this.tasklistData.setObjects(publishData.reverse()); //TODO: fix reverse hack
+  },
+
+  publishNewTask(editor){
+    this.publish(this.flatTasklistDataInstanceData(editor));
   }
 });
 

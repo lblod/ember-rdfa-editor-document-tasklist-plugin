@@ -3,8 +3,8 @@
 </p>
 
 {{#wu-button-group}}
-  {{wu-button label="Juist" size="small" isNarrow=true command="ctrl + j" commandLocation="below" onClick=(action "insert")}}
-  {{wu-button label="Negeer" size="tiny" isLink=true isDark=true isNarrow=true command="esc" commandLocation="below" onClick=null}}
+  {{wu-button label="ja" size="small" isNarrow=true command="ctrl + j" commandLocation="below" onClick=(action "insert")}}
+  {{wu-button label="neen" size="tiny" isLink=true isDark=true isNarrow=true command="esc" commandLocation="below" onClick=(action "remove")}}
 {{/wu-button-group}}
 
 {{yield}}
