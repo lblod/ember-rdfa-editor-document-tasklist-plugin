@@ -1,6 +1,5 @@
-import { getOwner } from '@ember/application';
 import Service from '@ember/service';
-import EmberObject, { computed } from '@ember/object';
+import EmberObject from '@ember/object';
 import { task } from 'ember-concurrency';
 import TasklistDataDomManipulation from '../mixins/tasklist-data-dom-manipulation';
 import { A } from '@ember/array';

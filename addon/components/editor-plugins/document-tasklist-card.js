@@ -51,7 +51,6 @@ export default Component.extend(TasklistDataDomManipulation, {
 
   actions: {
     insert(){
-      let mappedLocation = this.get('hintsRegistry').updateLocationToCurrentIndex(this.get('hrId'), this.get('location'));
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/document-tasklist-card');
       //node instance verwijderen
       this.editor.removeNode(this.taskInstanceData.tasklistDataInstance, [ { who: "editor-plugins/document-tasklist-card" } ]);
@@ -62,7 +61,6 @@ export default Component.extend(TasklistDataDomManipulation, {
       this.rdfaEditorDocumentTasklistPlugin.publishNewTask(this.editor, this.taskInstanceData);
     },
     remove(){
-      let mappedLocation = this.get('hintsRegistry').updateLocationToCurrentIndex(this.get('hrId'), this.get('location'));
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/document-tasklist-card');
       this.editor.removeNode(this.taskInstanceData.tasklistDataInstance, [ { who: "editor-plugins/document-tasklist-card" } ]);
       this.editor.removeNode(this.taskInstanceData.tasklistDataMeta, [ { who: "editor-plugins/document-tasklist-card" } ]);
