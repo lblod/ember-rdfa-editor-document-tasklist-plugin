@@ -35,7 +35,7 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
       return [];
 
     let flatTasklistData = this.manageTasklistMetadata(editor);
-    this.publish(flatTasklistData);
+    this.publish(flatTasklistData, editor);
 
     const hints = [];
     contexts.forEach((context) => {
@@ -85,7 +85,6 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
       info: {
         label: 'Wenst u een takenlijst toe te voegen?',
         plainValue: hint.text,
-        htmlString: '<b>hello world</b>',
         location: hint.location,
         taskInstanceData: hint.taskInstanceData,
         hrId, hintsRegistry, editor
@@ -119,18 +118,24 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
     return flatTasklistData.find(d => d.tasklistDataInstance.isSameNode(domTasklistDataInstance));
   },
 
-  publish(flatTasklistData){
+  publish(flatTasklistData, editor){
     if(!this.tasklistData){
       this.set('tasklistData', A());
     }
     let publishData = flatTasklistData
           .filter(d => d.tasklistDataState == 'syncing')
-          .map(d => { return {'tasklistUri': d.tasklistUri }; });
+          .map(tasklistData => {
+            return {editor, tasklistData};
+          });
     this.tasklistData.setObjects(publishData.reverse()); //TODO: fix reverse hack
   },
 
   publishNewTask(editor){
-    this.publish(this.flatTasklistDataInstanceData(editor));
+    this.publish(this.flatTasklistDataInstanceData(editor), editor);
+  },
+
+  setTaskSolutionUri(tasklistData, solutionUri){
+    this.setTasklistSolutionUri(tasklistData.editor, tasklistData.tasklistData.tasklistDataMeta, solutionUri);
   }
 });
 

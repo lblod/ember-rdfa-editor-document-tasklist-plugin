@@ -67,7 +67,8 @@ export default Mixin.create({
         tasklistDataInstance: this.getTasklistDataDomInstance(tasklistData),
         tasklistDataState: this.getTasklistDataState(tasklistData),
         tasklistDataMeta: tasklistData,
-        tasklistUri: this.getTasklistUri(tasklistData)
+        tasklistUri: this.getTasklistUri(tasklistData),
+        tasklistSolutionUri: this.getTasklistSolutionUri(tasklistData)
       };
     });
   },
@@ -77,6 +78,19 @@ export default Mixin.create({
     if(tasklistDataUriProp)
       return tasklistDataUriProp.attributes.resource.value;
     return '';
+  },
+
+  getTasklistSolutionUri(domRdfaTasklistData){
+    let tasklistDataUriProp = [...domRdfaTasklistData.children].find(child => child.attributes.property.value === 'ext:tasklistDataTasklistSolution');
+    if(tasklistDataUriProp)
+      return tasklistDataUriProp.attributes.resource.value;
+    return '';
+  },
+
+  setTasklistSolutionUri(editor, tasklistDataMeta, tasklistSolutionUri, extraInfo = [ this ] ){
+    let html = `<meta property="ext:tasklistDataTasklistSolution" resource="${tasklistSolutionUri}" typeof="ext:TasklistSolution"/>`;
+    //TODO:  check if domNode stil there
+    editor.prependChildrenHTML(tasklistDataMeta, html, false, extraInfo);
   },
 
   /**
