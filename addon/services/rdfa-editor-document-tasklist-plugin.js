@@ -2,7 +2,8 @@ import Service from '@ember/service';
 import EmberObject from '@ember/object';
 import { task } from 'ember-concurrency';
 import TasklistDataDomManipulation from '../mixins/tasklist-data-dom-manipulation';
-import { A } from '@ember/array';
+import { A, isArray } from '@ember/array';
+import { warn } from '@ember/debug';
 
 /**
  * Service responsible for correct annotation of dates
@@ -40,8 +41,17 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
     contexts.forEach((context) => {
       let relevantContext = this.detectRelevantContext(context);
       if (relevantContext) {
+        let richNodes = isArray(context.richNode) ? context.richNode : [ context.richNode ];
+        let domNode = richNodes
+              .map(r => this.getDomElementForRdfaInstructiveContext(editor.rootNode, r.domNode, relevantContext.predicate))
+              .find(d => d);
+        if(!domNode){
+          warn(`Trying to work on unattached domNode. Sorry can't handle these...`, {id: 'document-tasklist-plugin.domNode'});
+          return;
+        }
+
         hintsRegistry.removeHintsInRegion(context.region, hrId, this.get('who'));
-        hints.pushObjects(this.generateHintsForContext(context, flatTasklistData));
+        hints.pushObjects(this.generateHintsForContext(context, flatTasklistData, domNode));
       }
     });
     const cards = hints.map( (hint) => this.generateCard(hrId, hintsRegistry, editor, hint));
@@ -62,7 +72,27 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
    * @private
    */
   detectRelevantContext(context){
-    return context.context.find(t => t.predicate == "http://mu.semte.ch/vocabularies/ext/tasklistDataHintText");
+    if(context.context.slice(-1)[0].predicate == "http://mu.semte.ch/vocabularies/ext/tasklistDataHintText"){
+      return context.context.slice(-1)[0];
+    }
+    return null;
+  },
+
+  /**
+   * Find matching domNode for RDFA instructive.
+   * We don't exactly know where it is located, hence some walking back.
+   */
+  getDomElementForRdfaInstructiveContext(rootNode, domNode, instructiveRdfa){
+    let ext = 'http://mu.semte.ch/vocabularies/ext/';
+    if(!domNode || rootNode.isEqualNode(domNode)) return null;
+    if(!domNode.attributes || !domNode.attributes.property){
+      return this.getDomElementForRdfaInstructiveContext(rootNode, domNode.parentElement, instructiveRdfa);
+    }
+
+    let expandedProperty = domNode.attributes.property.value.replace('ext:', ext);
+    if(instructiveRdfa == expandedProperty)
+      return domNode;
+    return this.getDomElementForRdfaInstructiveContext(rootNode, domNode.parentElement, instructiveRdfa);
   },
 
   /**
@@ -104,11 +134,11 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
    *
    * @private
    */
-  generateHintsForContext(context, flatTasklistData){
+  generateHintsForContext(context, flatTasklistData, domNode){
     const hints = [];
     const text = context.text;
     const location = context.region;
-    const taskInstanceData = this.getTasklistData(context.richNode.domNode.parentElement, flatTasklistData);
+    const taskInstanceData = this.getTasklistData(domNode, flatTasklistData);
     hints.push({text, location, taskInstanceData});
     return hints;
   },
