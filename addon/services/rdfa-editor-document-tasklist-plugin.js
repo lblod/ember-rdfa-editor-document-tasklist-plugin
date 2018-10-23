@@ -151,12 +151,32 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
     if(!this.tasklistData){
       this.set('tasklistData', A());
     }
-    let publishData = flatTasklistData
+    let oldData = this.tasklistData.map(d => d.tasklistData);
+    let dataToPublish = flatTasklistData
           .filter(d => d.tasklistDataState == 'syncing')
-          .map(tasklistData => {
+          .reverse(); //TODO: fix reverse hack
+
+    if(!this.differentTasklists(oldData, dataToPublish))
+      return;
+
+    dataToPublish = dataToPublish.map(tasklistData => {
             return {editor, tasklistData};
           });
-    this.tasklistData.setObjects(publishData.reverse()); //TODO: fix reverse hack
+
+    //check if different..
+    this.tasklistData.setObjects(dataToPublish);
+  },
+
+  differentTasklists(listA, listB){
+    if(listA.length !== listB.length)
+      return true;
+    if(listA.length === 0)
+      return false;
+    if(listA[0].tasklistDataState !== listB[0].tasklistDataState)
+      return true;
+    if(listA[0].intentionUri !== listB[0].intentionUri)
+      return true;
+    return this.differentTasklists(listA.slice(1), listB.slice(1));
   },
 
   publishNewTask(editor){
