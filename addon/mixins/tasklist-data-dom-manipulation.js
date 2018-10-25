@@ -13,8 +13,7 @@ export default Mixin.create({
   manageTasklistMetadata(editor){
     let metadataBlock = this.fetchOrCreateMetadataBlock(editor);
     this.moveTasklistDataToMetaBlock(editor, metadataBlock);
-    let flatTaskData  = this.flatTasklistDataInstanceData(editor);
-    return this.cleanUpNullReferenceTasklistData(editor, flatTaskData);
+    return this.flatTasklistDataInstanceData(editor);
   },
 
   /**
@@ -64,7 +63,6 @@ export default Mixin.create({
     let tasklistDatas = [ ...editor.rootNode.querySelectorAll("[typeof='ext:TasklistData']")];
     return tasklistDatas.map( tasklistData => {
       return {
-        tasklistDataInstance: this.getTasklistDataDomInstance(tasklistData),
         tasklistDataState: this.getTasklistDataState(tasklistData),
         tasklistDataMeta: tasklistData,
         tasklistUri: this.getTasklistUri(tasklistData),
@@ -127,23 +125,5 @@ export default Mixin.create({
   getTasklistDataDomInstance(domRdfaTasklistData){
     let domId =  [...domRdfaTasklistData.children].find(child => child.attributes.property.value === 'ext:idInSnippet').attributes.content.value;
     return document.querySelectorAll(`[id='${domId}']`)[0];
-  },
-
-  /**
-   * Clean up null reference variables
-   * @param {Object} editor
-   * @param {Array} [{variableInstance, variableMeta}]
-   * @return {Array} up to date [{intentionUri, variableState, variableInstance, variableMeta}]
-   */
-  cleanUpNullReferenceTasklistData(editor, flatTaskinstanceData){
-    return flatTaskinstanceData.reduce((acc, v) => {
-      if(!v.tasklistDataInstance && v.tasklistDataState == 'initialized'){
-        editor.removeNode(v.tasklistDataMeta, [ this ]);
-      }
-      else{
-        acc.push(v);
-      }
-      return acc;
-    }, []);
   }
 });
