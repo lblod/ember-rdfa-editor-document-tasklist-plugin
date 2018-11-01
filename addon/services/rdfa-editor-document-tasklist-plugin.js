@@ -13,6 +13,8 @@ import { A } from '@ember/array';
  */
 const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulation, {
 
+  //public
+  tasklistData: null,
   /**
    * Restartable task to handle the incoming events from the editor dispatcher
    *
@@ -40,9 +42,9 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
         d.tasklistDataState = 'syncing';
       });
     this.publish(flatTasklistData, editor);
-    
+
   }).restartable(),
-  
+
   publish(flatTasklistData, editor){
     if(!this.tasklistData){
       this.set('tasklistData', A());
@@ -63,26 +65,32 @@ const RdfaEditorDocumentTasklistPlugin = Service.extend(TasklistDataDomManipulat
     this.tasklistData.setObjects(dataToPublish);
   },
 
-  differentTasklists(listA, listB){
-    if(listA.length !== listB.length)
+  differentTasklists(oldList, newList){
+    if(oldList.length !== newList.length)
       return true;
-    if(listA.length === 0)
+    if(oldList.length === 0)
       return false;
-    if(listA[0].tasklistDataState !== listB[0].tasklistDataState)
+    if(oldList[0].tasklistDataState !== newList[0].tasklistDataState)
       return true;
-    if(listA[0].intentionUri !== listB[0].intentionUri)
+    if(oldList[0].intentionUri !== newList[0].intentionUri)
       return true;
-    if(listA[0].tasklistSolutionUri !== listB[0].tasklistSolutionUri)
+    if(oldList[0].tasklistSolutionUri && oldList[0].tasklistSolutionUri !== newList[0].tasklistSolutionUri)
       return true;
-    return this.differentTasklists(listA.slice(1), listB.slice(1));
+    return this.differentTasklists(oldList.slice(1), newList.slice(1));
   },
 
   publishNewTask(editor){
     this.publish(this.flatTasklistDataInstanceData(editor), editor);
   },
 
+  //public
   setTaskSolutionUri(tasklistData, solutionUri){
     this.setTasklistSolutionUri(tasklistData.editor, tasklistData.tasklistData.tasklistDataMeta, solutionUri);
+  },
+
+  //public
+  flushTaskData(tasklistData){
+    this.set('tasklistData', A());
   }
 });
 
