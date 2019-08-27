@@ -109,6 +109,20 @@ The task list solution (i.e. whether the task has been completed or not) needs t
 ```
   this.get('tasklistPlugin').setTaskSolutionUri(taskListDataItem, "http://uri/of/the/tasklistSolution")
 ```
+Your resulting template (based on the snippet above) will look like:
+
+```
+<div class="ext_tasklist_data" typeof="ext:TasklistData" resource="http://task/list/data">
+  <div property="ext:idInSnippet" content="a-uuid">a-uuid</div>
+  <meta property="ext:tasklistDataTasklist" resource="http://uri/of/task/list" typeof="ext:Tasklist"/>
+  <meta property="ext:tasklistDataTasklistSolution" resource="http://uri/of/the/tasklistSolution" typeof="ext:TasklistSolution">
+  <div property="ext:tasklistDataState" content="initialized">initialized</div>
+</div>
+
+<div id="a-uuid" property="ext:tasklistDataHintText">Do you want to insert a tasklist associated with this template?</div>
+```
+
+Again, it is important to make the distinction between a task list and its set of predefined tasks, and the associated tasklist-solution and its task solutions, which keep track of the state of the task.
 
 TODO
 ------------------------------------------------------------------------------
